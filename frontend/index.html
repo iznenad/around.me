@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Ember Starter Kit</title>
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+</head>
+<body>
+
+  <script type="text/x-handlebars">
+    <div class="navbar">
+        <ul class="nav nav-tabs">
+          <li>{{#link-to 'index'}}Home{{/link-to}}</li>
+          <li>{{#link-to 'isaid'}}I said{{/link-to}}</li>
+          <li>{{#link-to 'say'}}Say{{/link-to}}</li>
+          <li>{{#link-to 'login'}}Login{{/link-to}}</li>
+          <li>{{#link-to 'register'}}Register{{/link-to}}</li>
+        </ul>
+    </div>
+
+    {{outlet}}
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="says">
+    <div class="list-group">
+
+      {{#each item in model}}
+        <a href="#" class="list-group-item">{{item.text}}</a>
+      {{/each}}
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="isaid">
+    <div class="list-group">
+
+      {{#each item in model}}
+        <a href="#" class="list-group-item">{{item.text}}</a>
+      {{/each}}
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="say">
+    <form class="form-vertical" role="form" {{action submitSay on="submit"}}> 
+    <div class="form-group">
+      {{textarea class="form-control" value=say cols="107" rows="3"}} <br />
+    </div>
+      {{input class="btn btn-default" type="submit" value="Say!"}} 
+
+    {{#if errorMessage}}
+      <span class="alert alert-error">{{errorMessage}}</span>
+    {{/if}}
+    </form>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="login">
+    <form class="form-vertical" role="form" {{action login on="submit"}}> 
+      <div class="form-group">
+        {{input type="text" class="form-control" value=username }} <br />
+      </div>
+      <div class="form-group">
+        {{input type="password" class="form-control" value=password}}
+      </div>
+        {{input class="btn btn-default" type="submit" value="Login"}} 
+
+      {{#if errorMessage}}
+        <span class="alert alert-error">{{errorMessage}}</span>
+      {{/if}}
+
+    </form>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="register">
+    <form class="form-vertical" role="form" {{action register on="submit"}}> 
+      <div class="form-group">
+        <label for="username">Username</label>
+        {{input type="text" class="form-control" name="username" value=username}}
+      </div>
+      <div class="form-group">
+        <label for="email">E-mail</label>
+        {{input type="text" class="form-control" value=email }}
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        {{input type="password" class="form-control" value=password}}
+      </div>
+      <div class="form-group">
+        <label for="repassword">Repeat Password</label>
+        {{input type="password" class="form-control" value=repeatPassword}}
+      </div>
+      {{input class="btn btn-default" type="submit" value="Register"}} 
+
+      {{#if errorMessage}}
+        <span class="alert alert-error">{{errorMessage}}</span>
+      {{/if}}
+
+    </form>
+  </script>
+  <script src="js/libs/jquery-1.9.1.js"></script>
+  <script src="js/libs/handlebars-1.0.0.js"></script>
+  <script src="js/libs/ember-1.1.2.js"></script>
+  <script src="js/libs/bootstrap.min.js"></script>
+
+  <script src="js/app.js"></script>
+  <script src="js/rest.js"></script>
+  <script src="js/router.js"></script>
+  <script src="js/views.js"></script>
+
+</body>
+</html>
