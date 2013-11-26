@@ -15,6 +15,9 @@ require('./db').db(Server, MongoClient, {
 
 }, function (db) {
 
+/*===============================================================================
+|   MODELS and related functions
+|===============================================================================*/
 var sayModel = function (params) {
     var id = generateId('say');
 
@@ -55,6 +58,9 @@ function guid() {
          s4() + '-' + s4() + s4() + s4();
 }
 
+/*============================================================================
+|   DB HELPERS
+|=============================================================================*/
   var dbCall = function (collectionName, performCommandOn) {
       db.collection(collectionName, function (err, collection) {
         if (err) { throw err; }
