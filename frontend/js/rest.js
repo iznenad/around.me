@@ -2,34 +2,43 @@ window.App.RestApi = Ember.Object.extend({
 
     apiPath: "http://localhost:8080",
 
-	whatsup:function(location){
+    says: function (id, query) {
+
+        var path = this.apiPath + "/says"
+        if(id){
+            path += "/" + id;
+        }
+
         var self = this;
-        var path = this.apiPath + "/whatsup";
-		return $.ajax({
-    		dataType: "json",
-    		url: path,
-
-    		success: function(data, status, xhr){
-    			return data.says;
-    		},
-    		beforeSend: function(xhr){
-   				self.addLocationHeaders(xhr, location);
-    		}
-		});
-	},
-
-    say: function(say) {
+        return $.ajax({
+            type: "GET",
+            dataType: "json",
+            url: path,
+            data: query,
+            beforeSend: function(xhr){
+                self.addLocationHeaders(xhr);
+                self.addTokenHeader(xhr);
+            }
+        });
+    },
+    say: function (say) {
         var path = this.apiPath + "/say";
         console.log(JSON.stringify(say));
+        var self = this;
+
         return $.ajax({
             type: "POST",
             dataType: "json",
             data: say,
-            url: path
+            url: path,
+            beforeSend: function(xhr){
+                self.addTokenHeader(xhr);
+                self.addLocationHeaders(xhr);
+            }
         });
     },
 
-    login: function(loginParams){
+    login: function (loginParams) {
         console.log("Logging the user: " + JSON.stringify(loginParams));
 
         var path = this.apiPath + "/login";
@@ -41,7 +50,7 @@ window.App.RestApi = Ember.Object.extend({
         });
     },
 
-    register: function(registrationData) {
+    register: function (registrationData) {
         console.log('Registering user: ' + JSON.stringify(registrationData));
 
         var path = this.apiPath + "/register";
@@ -54,8 +63,10 @@ window.App.RestApi = Ember.Object.extend({
         });
     },
 
-    addLocationHeaders: function(xhr, location){
-        xhr.setRequestHeader('latitude', location.coords.latitude);
-        xhr.setRequestHeader('longitude', location.coords.longitude);
+    addTokenHeader : function(xhr){
+        xhr.setRequestHeader('auth-token', localStorage.token);
+    },
+    addLocationHeaders: function(xhr){
+        xhr.setRequestHeader('location', localStorage.location);
     }
 });

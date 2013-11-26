@@ -1,115 +1,206 @@
-var jwt = reqire('jwt-simple')
+var MongoClient = require('mongodb').MongoClient,
+  Server = require('mongodb').Server;
+
+var jwt = require('jwt-simple');
 var filters = require('./filters');
 var express = require('express');
+var tokenRegistry = require('./token-registry').getInstance({});
+var util = require('util');
 var app = express();
 
-app.configure(function(){
+require('./db').db(Server, MongoClient, {
+  dbhost: 'localhost',
+  dbport: 27017,
+  dbname: 'around-me'
+
+}, function (db) {
+
+var sayModel = function (params) {
+    var id = generateId('say');
+
+    return {
+        id: id,
+        _id: id,
+        text: params.text,
+        username: params.username,
+        location: params.location,
+        posted: params.posted
+    }
+}
+
+var userModel = function (params) {
+    var id = generateId('user');
+
+    return {
+        id: id,
+        _id: id,
+        username: params.username,
+        password: params.password,
+        email: params.email
+    }
+}
+
+function generateId (modelName) {
+    return modelName + "-" + guid();
+}
+
+function s4() {
+  return Math.floor((1 + Math.random()) * 0x10000)
+             .toString(16)
+             .substring(1);
+};
+
+function guid() {
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+         s4() + '-' + s4() + s4() + s4();
+}
+
+  var dbCall = function (collectionName, performCommandOn) {
+      db.collection(collectionName, function (err, collection) {
+        if (err) { throw err; }
+
+        performCommandOn(collection);
+      });
+    };
+
+  var mongoInsertInto = function (collectionName, object, resolve) {
+      dbCall(collectionName, function (collection) {
+
+        collection.insert(object, function (err, inserted) {
+          if (err) { throw err; }
+          console.log('Succesfully inserted ' + inserted + ' into collection ' + collectionName);
+
+          resolve(inserted);
+        });
+
+      });
+    };
+
+  var mongoFind = function (collectionName, query, resolve, method) {
+
+    var methodToUse = method || 'find';
+    dbCall(collectionName, function (collection) {
+      collection[methodToUse](query, function (err, result) {
+        if (err) { throw err; }
+        if (result && result.each) {
+          result.toArray(function (err, docs) {
+            console.log('Fetch result: ' + JSON.stringify(docs) + ' for query ' + JSON.stringify(query) + ' on collection ' + collectionName);
+            resolve(docs);
+          });
+        } else {
+          console.log('Fetch result: ' + JSON.stringify(result) + ' for query ' + JSON.stringify(query) + ' on collection ' + collectionName);
+          resolve(result);
+        }
+      });
+    });
+  };
+  /*=============================================================
+  | API
+  |==============================================================*/
+  app.post('/register', function (req, res) {
+
+    var user = userModel(req.body);
+
+    mongoInsertInto('users', body, function (inserted) {
+      res.send({
+        success : true
+      });
+    });
+  });
+
+  app.get('/users', function (req, res) {
+    mongoFind('users', {}, function (users) { res.send(users); });
+  });
+
+  app.post('/login', function (req, res) {
+
+    var username = req.body.username;
+    var password = req.body.password;
+
+    mongoFind('users', {'username': username, 'password': password}, function (user) {
+
+      if (user) {
+        var token = jwt.encode(user, "secret");
+        tokenRegistry.addToken(token);
+        res.status(200);
+        res.send({
+          username: user.username,
+          token: token
+        });
+      } else {
+        res.status(401);
+        res.send({
+          message: "Invalid username/password"
+        });
+      }
+    }, 'findOne');
+
+  });
+
+  app.post('/say', function (req, res) {
+
+    var say = sayModel(
+        {
+            username: req.body.username,
+            text: req.body.text,
+            location: req.location,
+            posted: req.body.posted
+        });
+
+    mongoInsertInto('says', say, function () {
+      res.status(200);
+      res.send(say);
+    });
+  });
+
+  app.get('/says/:id', function (req, res) {
+    mongoFind('says', { 'id': req.params.id }, function (say) {
+        res.send(say);
+    }, 'findOne');
+  });
+
+  app.get('/says', function (req, res) {
+
+    var queries = {
+        'username': function (request) {
+            return {
+                username : request.param('username')
+            }
+        },
+        'location' : function (request) {
+            return {
+                    'location' : {              
+                        '$near': {
+                            '$geometry': request.location, 
+                            "$maxDistance" : request.param('distance') || 500 
+                        }
+                    }
+                }
+        }
+    }
+
+    var queryBy = req.param('queryBy');
+
+    mongoFind('says', queries[queryBy](req), function (result) {
+      res.send({says: result});
+    });
+
+  });
+});
+
+/*===============================================================================
+|  SERVER CONFIG
+\===============================================================================*/
+app.configure(function () {
   app.use('/', express.static("/home/iznenad/dev/around.me/frontend/"));
-
-});
-
-app.use(express.bodyParser());
-app.use(filters.tokenAuth({ignorePaths: ['/login', '/register']}, {tokens: ["mockToken"]}));
-
-app.post('/register', function(req, res){
-
-	var body = req.body;
-
-	db.collection('users', function(err, collection){
-		if(err) throw err;
-
-		console.log("Registered user: " + JSON.stringify(body));
-		collection.insert(body);
-
-		res.send({
-			success: true
-		});
-	});
-});
-
-app.get('/users', function(req, res){
-	res.send(users);
-});
-
-app.post('/login', function(req, res){
-
-	var username = req.body["username"];
-	var password = req.body["password"];
-
-	if(users[username]!=undefined && users[username].password == password){
-		res.status(200);
-		res.send(users[username]);
-		return;
-	}
-
-	res.status(401);
-	res.send("Unauthorized");
-});
-
-app.post('/say', function(req, res){
-
-	var say = req.body;
-
-	if(!say.text === "" || !say.username || !say.location) {
-		res.status(400);
-		res.send({errors: "Say wrongly formated!"});
-	}
-
-	var latitude = say.location.coordinates[0]*1;
-	var longitude = say.location.coordinates[1]*1;
-	say.location.coordinates = [latitude, longitude];
-
-	console.log(JSON.stringify(say));
-
-	db.collection('says', function(err, collection){
-		if(err) throw err;
-		collection.insert(say, {safe : true}, function(err, result) { console.log('Inserted a new say ' + result)} );
-	});
-
-	res.status(200);
-	res.send(say);
-});
-
-app.get('/whatsup', function(req, res){
-
-	var username = req.param('username');
-	var distance = req.get('maxdistance');
-	var latitude = req.get('latitude') * 1;
-	var longitude = req.get('longitude') * 1;
-
-	db.collection('says', function(err, collection){
-		var usernameQuery = {'username' : username};
-		var query = username ? usernameQuery : {'location':{'$near': {'$geometry': {'type': "Point", coordinates : [longitude,latitude]}, "$maxDistance" : distance || 500 }}};
-
-		collection.find(query).toArray(function(err, items){
-
-			res.send({says: items});		
-		});
-	});
-
+  app.use(express.bodyParser());
+  console.log('registering filters');
+  app.use(filters.tokenAuth({ignorePaths: ['/login', '/register']}, tokenRegistry));
+  app.use(filters.parseLocationHeaders());
+  app.use(app.router);
 });
 
 var port = process.env.PORT || 8080;
 console.log('Listening for connections on port', port);
 app.listen(port);
 
-
-var MongoClient = require('mongodb').MongoClient,
-    Server = require('mongodb').Server,
-    db;
-
-var mongoClient = new MongoClient(new Server('localhost', 27017));
-mongoClient.open(function(err, mongoClient) {
-    db = mongoClient.db("around-me");
-    console.log("Database connection established");
-});
-
-var says = {};
-
-says.generateId = function(){
-	return Object.keys(this).length + 1;
-};
-
-var locline = {};
-
-var users = {};

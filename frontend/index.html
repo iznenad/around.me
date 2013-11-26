@@ -14,34 +14,40 @@
         <ul class="nav nav-tabs">
           <li>{{#link-to 'index'}}Home{{/link-to}}</li>
           <li>{{#link-to 'isaid'}}I said{{/link-to}}</li>
-          <li>{{#link-to 'say'}}Say{{/link-to}}</li>
-          <li>{{#link-to 'login'}}Login{{/link-to}}</li>
-          <li>{{#link-to 'register'}}Register{{/link-to}}</li>
+          <li>{{#link-to 'says.new'}}Say{{/link-to}}</li>
+    
+          {{#unless username}}
+            <li>{{#link-to 'login'}}Login{{/link-to}}</li>
+            <li>{{#link-to 'register'}}Register{{/link-to}}</li>
+          {{/unless}}
+
+          {{#if username}}
+            <li><a {{action 'logout'}}>Logout</a></li>
+          {{/if}}
+
+            <li>{{#link-to 'user'}}{{username}}{{/link-to}}</li>
         </ul>
     </div>
 
     {{outlet}}
   </script>
 
-  <script type="text/x-handlebars" data-template-name="says">
-    <div class="list-group">
+  <script type="text/x-handlebars" data-template-name="say">
+    {{model.text}}
+    {{view App.MapView}}
+  </script>
 
-      {{#each item in model}}
-        <a href="#" class="list-group-item">{{item.text}}</a>
-      {{/each}}
-    </div>
+  <script type="text/x-handlebars" data-template-name="says">
+    {{outlet}}
+
+    {{says-list says=model}}
   </script>
 
   <script type="text/x-handlebars" data-template-name="isaid">
-    <div class="list-group">
-
-      {{#each item in model}}
-        <a href="#" class="list-group-item">{{item.text}}</a>
-      {{/each}}
-    </div>
+    {{says-list says=model}}
   </script>
 
-  <script type="text/x-handlebars" data-template-name="say">
+  <script type="text/x-handlebars" data-template-name="says/new">
     <form class="form-vertical" role="form" {{action submitSay on="submit"}}> 
     <div class="form-group">
       {{textarea class="form-control" value=say cols="107" rows="3"}} <br />
@@ -97,6 +103,23 @@
 
     </form>
   </script>
+
+  <script type="text/x-handlebars" id="components/says-list">
+   <div class="list-group">
+
+      {{#each item in says}}
+        <div {{action clicked}} class="list-group-item">
+          {{#link-to 'say' item}}{{item.text}}{{/link-to}}
+
+          <span>
+            {{nice-time item.posted}} {{#link-to 'user' item.username }}{{by item.username}}{{/link-to}}
+          </span>
+        </div>
+      {{/each}}
+    </div>
+  </script>
+
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD1zTXCLco6gi4cEIVIEmthJOXbODbecGw&sensor=true"></script>
   <script src="js/libs/jquery-1.9.1.js"></script>
   <script src="js/libs/handlebars-1.0.0.js"></script>
   <script src="js/libs/ember-1.1.2.js"></script>

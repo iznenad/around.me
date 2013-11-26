@@ -1,28 +1,54 @@
-window.App = Ember.Application.create();
-
-window.App.GeoController = Ember.ArrayController.extend({
-	setup: function(){
-		self = this;
-
-		navigator.geolocation.getCurrentPosition(function(position){
-
-			console.log(position);
-			console.log(position.coords.longitude);
-			console.log(position.coords.latitude);
-			self.set('location', App.Geolocation.create({
-				longitude : position.coords.longitude, 
-				latitude: position.coords.latitude
-			}));
-		});
-
-	}.on('init')	
+window.App = Ember.Application.create({
 });
 
-window.App.SaysController = App.GeoController.extend({
+window.App.ApplicationController = Ember.ArrayController.extend({
 
+	needs: ['login'],
+	location : localStorage.location,
+	username: "iznenad",
+
+	updateLocation: function(){
+		var self = this;
+		setInterval(function(){
+			navigator.geolocation.getCurrentPosition(function(position){
+
+				var geolocation = classes.Geolocation.create({
+					longitude: position.coords.longitude,
+					latitude: position.coords.latitude
+				});
+
+				localStorage.location = JSON.stringify(geolocation.toGeoJSONPoint());
+				self.set('location', geolocation.toGeoJSONPoint());
+			});
+		}, 10000);
+	}.on('init'),
+
+	actions: {
+		logout: function(){
+			var loginController = this.get('controllers.login');
+
+			loginController.set('token', null);
+			this.set('username', undefined);
+			console.log('Logging the user out');
+
+			this.transitionToRoute('login');
+		}
+	}
 });
 
-window.App.SayController = App.GeoController.extend({
+window.App.UserController = App.ApplicationController.extend({
+	
+});
+
+window.App.SaysController = App.ApplicationController.extend({
+	actions: {
+		clicked: function () {
+			alert('Radi!');
+		}
+	}
+});
+
+window.App.SaysNewController = App.ApplicationController.extend({
 	say: "",
 	actions:{
 		submitSay:function(){
@@ -38,7 +64,8 @@ window.App.SayController = App.GeoController.extend({
 			App.RestApi.create().say({
 				text: self.say,
 				username: 'iznenad',
-				location: self.get('location').toGeoJSONPoint()
+				location: self.get('location'),
+				posted: $.now()
 
 			}).then(function(result){
 				self.set('say', "");
@@ -50,8 +77,24 @@ window.App.SayController = App.GeoController.extend({
 });
 
 window.App.LoginController = Ember.Controller.extend({
+	needs: ['application'],
 	username: "",
 	password: "",
+
+	token: localStorage.token,
+
+	tokenChanged: function(){
+
+		var token = this.get('token');
+		if(token == undefined || token == null){
+			localStorage.removeItem('token');
+			return;
+		}
+
+		localStorage.token = token;
+
+	}.observes('token'),
+
 	reset: function (){
 		this.setProperties({
 			username: "",
@@ -69,7 +112,15 @@ window.App.LoginController = Ember.Controller.extend({
 			}).then(
 				function(result){
 					self.set('token', result.token);
-					localStorage.token = result.token;
+					self.get('controllers.application').set('username', result.username);
+
+					var attemptedTransition = self.get('attemptedTransition');
+					if(attemptedTransition) {
+						attemptedTransition.retry();
+						self.set('attemptedTransition', undefined);
+					} else{
+						self.transitionToRoute('says');
+					}
 				}, 
 				function(error){
 					self.set('errorMessage', "Wrong username/password combination");
@@ -117,8 +168,8 @@ classes.Geolocation = Ember.Object.extend({
 	toGeoJSONPoint: function(){
 
 		return {
-			"type" : "Point",
-			"coordinates": [this.longitude,this.latitude]
+			type : "Point",
+			coordinates: [this.longitude,this.latitude]
 		}
 	}
 });
