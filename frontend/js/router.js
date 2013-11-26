@@ -99,7 +99,6 @@ window.App.SaysRoute = window.App.NeedsAuthentication.extend({
 
 window.App.SayRoute = window.App.NeedsAuthentication.extend({
     model: function (params) {
-            console.log('pozivam');
             return App.RestApi.create().says(params.say_id);
         },
     setupController: function (controller, model) {
