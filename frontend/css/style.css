@@ -2,3 +2,9 @@
 html, body {
     margin: 20px;
 }
+#map-canvas {
+position: relative;
+display: list-item;
+height: 300px;
+width: 100%;
+}

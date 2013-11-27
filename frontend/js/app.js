@@ -37,15 +37,11 @@ window.App.ApplicationController = Ember.ArrayController.extend({
 });
 
 window.App.UserController = App.ApplicationController.extend({
-	
+
 });
 
 window.App.SaysController = App.ApplicationController.extend({
-	actions: {
-		clicked: function () {
-			alert('Radi!');
-		}
-	}
+
 });
 
 window.App.SaysNewController = App.ApplicationController.extend({

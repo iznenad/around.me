@@ -3,10 +3,10 @@ window.App.Router.map(function () {
     
     this.resource('says', function () {
         this.resource('say', { path: '/:say_id' });
+        this.resource('says.user', { path: '/:username' });
         this.resource('says.new', { path: '/new' });
     });
-
-    this.route('isaid');
+    this.route('map');
     this.route('login');
     this.route('register');
 
@@ -75,7 +75,7 @@ window.App.LoginRoute = Ember.Route.extend({
     }
 });
 
-window.App.IsaidRoute = window.App.NeedsAuthentication.extend({
+window.App.SaysUserRoute = window.App.NeedsAuthentication.extend({
     model: function (){
         var appController = this.controllerFor('application');
 

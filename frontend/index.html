@@ -13,12 +13,12 @@
     <div class="navbar">
         <ul class="nav nav-tabs">
           <li>{{#link-to 'index'}}Home{{/link-to}}</li>
-          <li>{{#link-to 'isaid'}}I said{{/link-to}}</li>
+          <li>{{#link-to 'says.user' username}}I said{{/link-to}}</li>
           <li>{{#link-to 'says.new'}}Say{{/link-to}}</li>
     
           {{#unless username}}
             <li>{{#link-to 'login'}}Login{{/link-to}}</li>
-            <li>{{#link-to 'register'}}Register{{/link-to}}</li>
+            <li>{{#link-to 'register' }}Register{{/link-to}}</li>
           {{/unless}}
 
           {{#if username}}
@@ -30,11 +30,6 @@
     </div>
 
     {{outlet}}
-  </script>
-
-  <script type="text/x-handlebars" data-template-name="say">
-    {{model.text}}
-    {{view App.MapView}}
   </script>
 
   <script type="text/x-handlebars" data-template-name="says">
@@ -103,7 +98,9 @@
 
     </form>
   </script>
-
+  <script type="text/x-handlebars" id="map">
+    {{view App.MapView}}
+  </script>
   <script type="text/x-handlebars" id="components/says-list">
    <div class="list-group">
 
