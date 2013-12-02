@@ -7,7 +7,7 @@ var express = require('express');
 var tokenRegistry = require('./token-registry').getInstance({});
 var util = require('util');
 var app = express();
-
+var crudman = require('../crudman/crudman').crudman;
 require('./db').db(Server, MongoClient, {
   dbhost: 'localhost',
   dbport: 27017,
